@@ -1,20 +1,18 @@
-#[derive(Default, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Move {
-    #[default]
     Rock = 1,
     Paper = 2,
     Scissors = 3,
 }
 
-#[derive(Default, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum RoundResult {
-    #[default]
     Win = 6,
     Draw = 3,
     Lose = 0,
 }
 
-#[derive(Default, Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub struct GameRound {
     own_move: Move,
     opponent_move: Move,
