@@ -23,28 +23,25 @@ fn main() {
             let middle = line.len() / 2;
             (&line[..middle], &line[middle..])
         })
-        .map(|(left, right)| left.chars().find(|ch| right.find(*ch).is_some()))
-        .map(|ch| priority(ch.unwrap()))
+        .filter_map(|(left, right)| left.chars().find(|ch| right.find(*ch).is_some()))
+        .map(|ch| priority(ch))
         .sum();
     println!("Sum of priorities of items in both pockets is: {prio_sum}");
 
-    let chunks = file_text
-        .split("\n")
-        .filter(|s| s != &"")
-        .chunks(3);
+    let chunks = file_text.split("\n").filter(|s| s != &"").chunks(3);
 
     let prio_sum: u32 = chunks
         .into_iter()
-        .map(|mut chunk| {
+        .filter_map(|mut chunk| {
             let first = chunk.next().unwrap();
             let second = chunk.next().unwrap();
             let third = chunk.next().unwrap();
 
-            first.chars().find( |ch| {
-                second.find(*ch).is_some() && third.find(*ch).is_some()
-            })
+            first
+                .chars()
+                .find(|ch| second.find(*ch).is_some() && third.find(*ch).is_some())
         })
-        .map(|ch| priority(ch.unwrap()))
+        .map(|ch| priority(ch))
         .sum();
 
     println!("Sum of priorities of each 3-elf team item is: {prio_sum}");
