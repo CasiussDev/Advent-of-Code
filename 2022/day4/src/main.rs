@@ -7,7 +7,6 @@ use contains::Contains;
 use overlaps::Overlaps;
 
 use nom::{
-    branch::alt,
     character::complete::{char, digit1},
     combinator::map_res,
     sequence::separated_pair,
