@@ -99,10 +99,6 @@ impl Pos {
     pub fn new(x: i16, y: i16) -> Self {
         Self(x, y)
     }
-
-    pub fn single_step(&self) -> Self {
-        Self(signum(self.0), signum(self.1))
-    }
 }
 
 impl Move {
@@ -112,10 +108,6 @@ impl Move {
 }
 
 impl Knot {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn apply(&mut self, m: Direction) {
         self.pos += m.into()
     }
