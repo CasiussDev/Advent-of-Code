@@ -18,27 +18,33 @@ fn main() {
 
     let mut dev = device::Device::new();
 
-    let interesting_iter = (FIRST_INTERESTING_CYCLE..=LAST_INTERESTING_CYCLE).step_by(INTERESTING_CYCLE_STEP);
+    let interesting_iter =
+        (FIRST_INTERESTING_CYCLE..=LAST_INTERESTING_CYCLE).step_by(INTERESTING_CYCLE_STEP);
 
-    let signal_sum: i16 = interesting_iter.map(|cycles| {
-        instr_iter.find(|&instr| {
-            //println!("execute {instr:?}");
-            dev.execute(instr);
-            //println!("{dev:?}");
-            dev.cycle_count() >= cycles
-        });
-        if dev.cycle_count() == cycles {
-            //println!("\tAt cycle {cycles} strength {}", dev.x() * cycles as i16);
-            dev.x() * cycles as i16
-        } else if dev.cycle_count() > cycles {
-            //println!("\tAt cycle {} prev strength {}", dev.cycle_count(), dev.prev_x() * cycles as i16);
-            dev.prev_x() * cycles as i16
-        } else {
-            unreachable!()
-        }
-    }).sum();
+    let signal_sum: i16 = interesting_iter
+        .map(|cycles| {
+            instr_iter.find(|&instr| {
+                //println!("execute {instr:?}");
+                dev.execute(instr);
+                //println!("{dev:?}");
+                dev.cycle_count() >= cycles
+            });
+            if dev.cycle_count() == cycles {
+                //println!("\tAt cycle {cycles} strength {}", dev.x() * cycles as i16);
+                dev.x() * cycles as i16
+            } else if dev.cycle_count() > cycles {
+                //println!("\tAt cycle {} prev strength {}", dev.cycle_count(), dev.prev_x() * cycles as i16);
+                dev.prev_x() * cycles as i16
+            } else {
+                unreachable!()
+            }
+        })
+        .sum();
+
+    // Finish remaining instructions
+    instr_iter.for_each(|instr| dev.execute(instr));
 
     println!("Sum of signal strength at interesting time points is {signal_sum}");
 
-    
+    println!("\n\n\n{}\n\n\n", dev.picture());
 }
