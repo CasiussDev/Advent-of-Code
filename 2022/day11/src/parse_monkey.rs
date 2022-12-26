@@ -3,7 +3,7 @@ use nom::bytes::complete::tag;
 use nom::character::complete::*;
 use nom::combinator::map;
 use nom::multi::{separated_list1, separated_list0};
-use nom::sequence::{separated_pair, delimited, preceded, pair, tuple};
+use nom::sequence::{delimited, preceded, pair, tuple};
 use nom::IResult;
 
 use crate::monkey;
@@ -15,7 +15,7 @@ fn parse_id(input: &str) -> IResult<&str, ()> {
 }
 
 fn parse_item(input: &str) -> IResult<&str, monkey::WorryLevel> {
-    map(u16, |id| monkey::WorryLevel::new(id))(input)
+    map(u128, |id| monkey::WorryLevel::new(id))(input)
 }
 
 fn parse_starting_items(input: &str) -> IResult<&str, Vec<monkey::WorryLevel>> {

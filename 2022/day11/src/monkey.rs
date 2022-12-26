@@ -1,6 +1,14 @@
 use std::collections::VecDeque;
 
-const WORRY_DECREASE_DIVIDER: u16 = 3;
+use crate::top2::Top2;
+
+const WORRY_DECREASE_DIVIDER: u128 = 3;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WorryDecEnabled {
+    True,
+    False,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorryOp {
@@ -13,12 +21,12 @@ pub enum WorryOp {
 pub struct DivisibleBy(u16);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct WorryLevel(u16);
+pub struct WorryLevel(u128);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MonkeyId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct InspectedCount(usize);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,6 +36,7 @@ pub struct Monkey {
     test: DivisibleBy,
     if_true: MonkeyId,
     if_false: MonkeyId,
+    inspected_count: InspectedCount,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -43,7 +52,7 @@ impl MonkeyId {
 }
 
 impl WorryLevel {
-    pub fn new(value: u16) -> Self {
+    pub fn new(value: u128) -> Self {
         Self(value)
     }
 
@@ -54,9 +63,10 @@ impl WorryLevel {
 
 impl WorryOp {
     fn apply_to(&self, item: WorryLevel) -> WorryLevel {
+        println!("{}", item.0);
         match self {
-            WorryOp::Add(sumand) => WorryLevel(item.0 + sumand),
-            WorryOp::Mul(factor) => WorryLevel(item.0 * factor),
+            WorryOp::Add(sumand) => WorryLevel(item.0 + *sumand as u128),
+            WorryOp::Mul(factor) => WorryLevel(item.0 * *factor as u128),
             WorryOp::Square => WorryLevel(item.0 * item.0),
         }
     }
@@ -68,7 +78,7 @@ impl DivisibleBy {
     }
 
     pub fn is_true_for(&self, item: WorryLevel) -> bool {
-        (item.0 % self.0) == 0
+        (item.0 % self.0 as u128) == 0
     }
 }
 
@@ -86,15 +96,21 @@ impl Monkey {
             test,
             if_true,
             if_false,
+            inspected_count: Default::default(),
         };
         monkey.items.extend(items.iter().cloned());
         monkey
     }
 
-    pub fn turn(&mut self, throws: &mut Vec<(MonkeyId, WorryLevel)>) -> InspectedCount {
-        let items_count = self.items.len(); 
+    pub fn turn(&mut self, throws: &mut Vec<(MonkeyId, WorryLevel)>, worry_dec: WorryDecEnabled) {
+        let items_count = self.items.len();
+        self.inspected_count = InspectedCount(items_count + self.inspected_count.0);
         for item in self.items.drain(..) {
-            let inspected_item = self.op.apply_to(item).decrease();
+            let inspected_item = if worry_dec == WorryDecEnabled::True {
+                self.op.apply_to(item).decrease()
+            } else {
+                self.op.apply_to(item)
+            };
             let destination_monkey = if self.test.is_true_for(inspected_item) {
                 self.if_true
             } else {
@@ -103,7 +119,6 @@ impl Monkey {
 
             throws.push((destination_monkey, inspected_item));
         }
-        InspectedCount(items_count)
     }
 
     pub fn catch(&mut self, item: WorryLevel) {
@@ -123,17 +138,30 @@ impl Troop {
         }
     }
 
-    pub fn set_monkeys(&mut self, monkeys: Vec<Monkey>) {
-        self.monkeys = monkeys;
-    }
+    //pub fn set_monkeys(&mut self, monkeys: Vec<Monkey>) {
+    //    self.monkeys = monkeys;
+    //}
 
-    pub fn round(&mut self) {
-        for monkey_id in (0..self.monkeys.len()) {
-            self.monkeys[monkey_id].turn(&mut self.thrown_items);
+    pub fn round(&mut self, worry_dec: WorryDecEnabled) {
+        for monkey_id in 0..self.monkeys.len() {
+            self.monkeys[monkey_id].turn(&mut self.thrown_items, worry_dec);
 
             for (monkey_id, item) in self.thrown_items.drain(..) {
                 self.monkeys[monkey_id.0].catch(item);
             }
         }
+    }
+
+    pub fn top2_inspectors(&self) -> (Option<InspectedCount>, Option<InspectedCount>) {
+        self.monkeys
+            .iter()
+            .map(|monkey| monkey.inspected_count)
+            .top2()
+    }
+}
+
+impl InspectedCount {
+    pub fn get(&self) -> usize {
+        self.0
     }
 }
