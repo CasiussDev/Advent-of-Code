@@ -7,15 +7,13 @@ mod top2;
 use std::fs;
 
 fn main() {
-    let input_text = fs::read_to_string("test_input.txt").unwrap();
+    let input_text = fs::read_to_string("input.txt").unwrap();
 
     let mut troop = parse_monkey::parse_monkeys(input_text.as_str());
     let mut troop2 = troop.clone();
 
     for _ in 0..20 {
         troop.round(monkey::WorryDecEnabled::True);
-
-        //println!("{troop:?}\n\n");
     }
 
     let top2_inspectors = troop.top2_inspectors();

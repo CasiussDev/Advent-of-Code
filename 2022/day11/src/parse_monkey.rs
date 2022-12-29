@@ -7,6 +7,7 @@ use nom::sequence::{delimited, preceded, pair, tuple};
 use nom::IResult;
 
 use crate::monkey;
+use crate::monkey::WorryLevelIntSize;
 
 fn parse_id(input: &str) -> IResult<&str, ()> {
     let parser = tuple((tag("Monkey "), digit1, char(':'), newline));
@@ -15,7 +16,7 @@ fn parse_id(input: &str) -> IResult<&str, ()> {
 }
 
 fn parse_item(input: &str) -> IResult<&str, monkey::WorryLevel> {
-    map(u128, |id| monkey::WorryLevel::new(id))(input)
+    map(u128, |id| monkey::WorryLevel::new(id as WorryLevelIntSize))(input)
 }
 
 fn parse_starting_items(input: &str) -> IResult<&str, Vec<monkey::WorryLevel>> {

@@ -2,7 +2,9 @@ use std::collections::VecDeque;
 
 use crate::top2::Top2;
 
-const WORRY_DECREASE_DIVIDER: u128 = 3;
+pub type WorryLevelIntSize = u64;
+
+const WORRY_DECREASE_DIVIDER: WorryLevelIntSize = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorryDecEnabled {
@@ -21,7 +23,7 @@ pub enum WorryOp {
 pub struct DivisibleBy(u16);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct WorryLevel(u128);
+pub struct WorryLevel(WorryLevelIntSize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct MonkeyId(usize);
@@ -43,6 +45,7 @@ pub struct Monkey {
 pub struct Troop {
     monkeys: Vec<Monkey>,
     thrown_items: Vec<(MonkeyId, WorryLevel)>,
+    troop_divisor: WorryLevelIntSize,
 }
 
 impl MonkeyId {
@@ -52,7 +55,7 @@ impl MonkeyId {
 }
 
 impl WorryLevel {
-    pub fn new(value: u128) -> Self {
+    pub fn new(value: WorryLevelIntSize) -> Self {
         Self(value)
     }
 
@@ -63,10 +66,9 @@ impl WorryLevel {
 
 impl WorryOp {
     fn apply_to(&self, item: WorryLevel) -> WorryLevel {
-        println!("{}", item.0);
         match self {
-            WorryOp::Add(sumand) => WorryLevel(item.0 + *sumand as u128),
-            WorryOp::Mul(factor) => WorryLevel(item.0 * *factor as u128),
+            WorryOp::Add(sumand) => WorryLevel(item.0 + *sumand as WorryLevelIntSize),
+            WorryOp::Mul(factor) => WorryLevel(item.0 * *factor as WorryLevelIntSize),
             WorryOp::Square => WorryLevel(item.0 * item.0),
         }
     }
@@ -78,7 +80,7 @@ impl DivisibleBy {
     }
 
     pub fn is_true_for(&self, item: WorryLevel) -> bool {
-        (item.0 % self.0 as u128) == 0
+        (item.0 % self.0 as WorryLevelIntSize) == 0
     }
 }
 
@@ -117,37 +119,41 @@ impl Monkey {
                 self.if_false
             };
 
-            throws.push((destination_monkey, inspected_item));
+            throws.push((destination_monkey, WorryLevel(inspected_item.0)));
         }
     }
 
     pub fn catch(&mut self, item: WorryLevel) {
-        self.items.push_back(item);
+        self.items.push_back(WorryLevel(item.0));
     }
 }
 
 impl Troop {
-    //pub fn new() -> Self {
-    //    Self::default()
-    //}
-
     pub fn new(monkeys: Vec<Monkey>) -> Self {
-        Self {
+        let mut troop = Self {
             monkeys,
             thrown_items: Default::default(),
-        }
+            troop_divisor: Default::default(),
+        };
+        troop.troop_divisor = troop
+            .monkeys
+            .iter()
+            .map(|monkey| monkey.test.0 as WorryLevelIntSize)
+            .fold(1, |acc, d| acc * d);
+        troop
     }
-
-    //pub fn set_monkeys(&mut self, monkeys: Vec<Monkey>) {
-    //    self.monkeys = monkeys;
-    //}
 
     pub fn round(&mut self, worry_dec: WorryDecEnabled) {
         for monkey_id in 0..self.monkeys.len() {
             self.monkeys[monkey_id].turn(&mut self.thrown_items, worry_dec);
 
             for (monkey_id, item) in self.thrown_items.drain(..) {
-                self.monkeys[monkey_id.0].catch(item);
+                let level = if false && worry_dec == WorryDecEnabled::True {
+                    item.0
+                } else {
+                    item.0 % self.troop_divisor
+                };
+                self.monkeys[monkey_id.0].catch(WorryLevel(level));
             }
         }
     }
